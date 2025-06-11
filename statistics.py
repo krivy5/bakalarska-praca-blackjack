@@ -1,21 +1,86 @@
 import time
+from typing import Optional, List
+
 import matplotlib
 
+from Players.anchoring_player import AnchoringPlayer
+from Players.gamblers_fallacy import GamblersFallacyPlayer
+from Players.hot_hand_fallacy_player import HotHandFallacyPlayer
 from Players.random_player import RandomPlayer
+from Players.sunk_cost_fallacy import SunkCostFallacyPlayer
+from Players.availability_heuristic_player import AvailabilityHeuristicPlayer
 
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-from Players.anchoring_player import AnchoringPlayer, l
 from Players.optimal_player import OptimalPlayer
-from Players.sunk_cost_fallacy import SunkCostFallacyPlayer
 from constants import Outcomes
 from game import Game
 from player import Player
 from table import Table
 
 
-def get_win_rate(simulated_player: Player, players_in_table=None, number_of_rounds=1000):
+def save_amount_history_data(player: Player, file_name='modeled_data/amount_history.txt'):
+    with open(file_name, "w") as f:
+        text = ""
+        for c, amount in enumerate(player.history.amount_history):
+            text += f"{c}\t{amount}\n"
+        f.write(text)
+
+
+def plot_values(
+    players: List[Player],
+    xlabel: str = 'Position',
+    ylabel: str = 'Value',
+    title: str = 'Value vs Position',
+    markers: Optional[List[Optional[str]]] = None,
+    linestyles: Optional[List[str]] = None,
+    linewidth: float = 0.5,
+    grid: bool = True,
+    figsize: tuple = (8, 5),
+    **plot_kwargs
+):
+    """
+    Plot each player's amount_history on the same graph.
+
+    players      : list of Player
+    markers      : optional list of markers (one per player)
+    linestyles   : optional list of linestyles (one per player)
+    plot_kwargs  : passed to plt.plot for all series (e.g. color, alpha)
+    """
+    plt.figure(figsize=figsize)
+
+    # default markers/linestyles if not provided
+    n = len(players)
+    if markers is None:
+        markers = [None] * n
+    if linestyles is None:
+        linestyles = ['-'] * n
+
+    for idx, player in enumerate(players):
+        values = player.history.amount_history
+        positions = list(range(len(values)))
+        plt.plot(
+            positions,
+            values,
+            label=getattr(player, 'name', f'Player {idx+1}'),
+            marker=markers[idx],
+            linestyle=linestyles[idx],
+            linewidth=linewidth,
+            **plot_kwargs
+        )
+
+    if grid:
+        plt.grid(True, linestyle='--', alpha=0.5)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def get_win_rate(simulated_player: Player, players_in_table=None, number_of_rounds=1000, file_name="winrate.txt"):
     if players_in_table is None:
         players_in_table = []
 
@@ -44,81 +109,44 @@ def get_win_rate(simulated_player: Player, players_in_table=None, number_of_roun
     print(f"Draw percentage: {draws / total_hands * 100:.2f}")
     print(f"Loss percentage: {losses / total_hands * 100:.2f}")
 
+    with (open(file_name, "w") as f):
+        for player in table.players:
+            wins = player.outcomes_stats[Outcomes.win]
+            draws = player.outcomes_stats[Outcomes.draw]
+            losses = player.outcomes_stats[Outcomes.loss]
 
-def save_amount_history_data(player: Player, file_name='modeled_data/amount_history.txt'):
-    with open(file_name, "w") as f:
-        text = ""
-        for c, amount in enumerate(player.history.amount_history):
-            text += f"{c}\t{amount}\n"
-        f.write(text)
+            total_hands = wins + draws + losses
 
+            f.write(f"{player.name}\n")
+            f.write(f"Win percentage: {wins / total_hands * 100:.2f}\n")
+            f.write(f"Draw percentage: {draws / total_hands * 100:.2f}\n")
+            f.write(f"Loss percentage: {losses / total_hands * 100:.2f}\n")
+            if isinstance(player, AnchoringPlayer) or isinstance(player, AvailabilityHeuristicPlayer):
+                f.write(f"Number of influenced moves: {player.number_of_influenced_moves}\n")
+            f.write(f"Money left: {player.money}\n\n")
 
-def plot_values(player: Player,
-                xlabel='Position',
-                ylabel='Value',
-                title='Value vs Position',
-                marker=None,
-                linewidth=0.5,
-                linestyle='-',
-                grid=True,
-                figsize=(8, 5),
-                **plot_kwargs):
-
-    values = player.history.amount_history
-
-    positions = list(range(len(values)))
-    plt.figure(figsize=figsize)
-    plt.plot(positions, values,
-             linewidth=linewidth,
-             marker=marker,
-             linestyle=linestyle,
-             **plot_kwargs)
-
-    if grid:
-        plt.grid(True, linestyle='--', alpha=0.5)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.title(title)
-    plt.tight_layout()
-    plt.show()
+        for player in table.players:
+            f.write(f"{player.name}\n")
+            f.write(f"{player.history.records}")
+            f.write(f"\n\n")
 
 
-# sunk = SunkCostFallacyPlayer("sunk", 1_000_000)
-# get_win_rate(sunk, number_of_rounds=100_000)
-# # save_amount_history_data(player=sunk, file_name="modeled_data/sunk_amount_history_1m_100k.txt")
-# plot_values(sunk, title='klam utopenych nakladov')
-# print(sunk.money)
+if __name__ == "__main__":
 
-# opt = OptimalPlayer("OptimalPlayer", 1_000_000)
-# get_win_rate(opt, number_of_rounds=100_000)
-# # save_amount_history_data(player=opt, file_name="modeled_data/opt_amount_history_1m_100k.txt")
-# plot_values(opt, title='OPT')
-# print(opt.money)
+    start_capital = 10_0000
+    number_of_rounds = 1000
 
-rnd = RandomPlayer("RandomPlayer", 10_000_000)
-get_win_rate(rnd, number_of_rounds=100_000)
-# save_amount_history_data(player=rnd, file_name="modeled_data/rnd_amount_history_1m_100k.txt")
-plot_values(rnd, title='RND')
-print(rnd.money)
+    opt = OptimalPlayer("Optimal", start_capital)
+    hot = HotHandFallacyPlayer("HotHandFallacy", start_capital)
+    sunk = SunkCostFallacyPlayer("SunkCostFallacy", start_capital)
+    ava = AvailabilityHeuristicPlayer("AvailabilityHeuristic", start_capital)
+    anch = AnchoringPlayer("Anchoring", start_capital)
+    gamb = GamblersFallacyPlayer("GamblersFallacy", start_capital)
+    rand = RandomPlayer("Random", start_capital)
 
-
-# o, h = [], []
-# for i in range(100):
-#     optimal_player = OptimalPlayer("norik", 1_000_000)
-#     get_win_rate(optimal_player, number_of_rounds=100_000)
-#     o.append(optimal_player.money)
-#     # save_amount_history_data(optimal_player, "modeled_data/opt_amount_history.txt")
-#     # print()
-#
-#     hot_hand_fallacy_player = HotHandFallacyPlayer("norik", 1_000_000)
-#     get_win_rate(hot_hand_fallacy_player, number_of_rounds=100_000)
-#     h.append(hot_hand_fallacy_player.money)
-#     # save_amount_history_data(hot_hand_fallacy_player, "modeled_data/hot_amount_history.txt")
-#     print("i =", i)
-#
-# print(o)
-# print(h)
-# avail_player = AvailabilityHeuristicPlayer("norik", 1_000_000)
-# print(get_win_rate(avail_player, number_of_rounds=100_000))
-# save_amount_history_data(avail_player, "modeled_data/avail_amount_history.txt")
-# print()
+    get_win_rate(
+        simulated_player=rand,
+        players_in_table=[opt, hot, sunk, ava, anch, gamb],
+        number_of_rounds=number_of_rounds,
+        file_name="skuska.txt"
+    )

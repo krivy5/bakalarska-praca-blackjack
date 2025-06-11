@@ -1,6 +1,6 @@
 from constants import GameActions, Outcomes
 from history import History
-from utilities import PlayerHand
+from hand import PlayerHand
 
 
 class Player:

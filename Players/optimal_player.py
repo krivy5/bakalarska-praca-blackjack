@@ -1,6 +1,6 @@
-from constants import GameActions, DEFAULT_BET, Outcomes
+from hand import PlayerHand
 from player import Player
-from utilities import PlayerHand
+from constants import GameActions, DEFAULT_BET
 
 MY_CARDS = 'my_cards'
 DEALER_CARD = 'dealer_card'
@@ -26,7 +26,7 @@ CONDITIONS_DOUBLE_DOWN_WITH_ACE = [
 ]
 
 ALWAYS_HIT = {5, 6, 7, 8, 9, 10, 11}
-ALWAYS_HIT_ACE = {13, 14, 15, 16, 17}
+ALWAYS_HIT_WITH_ACE = {13, 14, 15, 16, 17}
 CONDITIONS_HIT = [
     {MY_CARDS: {13, 14, 15, 16}, DEALER_CARD: {7, 8, 9, 10, 11}},
     {MY_CARDS: {12}, DEALER_CARD: {2, 3, 7, 8, 9, 10, 11}}
@@ -76,7 +76,7 @@ class OptimalPlayer(Player):
         hand_value = hand.optimal_value
         have_ace = hand.contains_rank(ACE_RANK)
 
-        if have_ace and hand_value in ALWAYS_HIT_ACE:
+        if have_ace and hand_value in ALWAYS_HIT_WITH_ACE:
             return GameActions.hit
         elif not have_ace and hand_value in ALWAYS_HIT:
             return GameActions.hit
@@ -88,6 +88,3 @@ class OptimalPlayer(Player):
                 return GameActions.hit
 
         return GameActions.stand
-
-
-# https: // ieeexplore.ieee.org / abstract / document / 1299399

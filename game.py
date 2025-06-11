@@ -1,4 +1,4 @@
-from utilities.constants import MINIMUM_DEALER_VALUE, Outcomes
+from constants import MINIMUM_DEALER_VALUE, Outcomes
 from table import Table
 
 

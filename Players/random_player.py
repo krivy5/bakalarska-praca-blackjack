@@ -1,8 +1,8 @@
 import random
 
 from Players.optimal_player import OptimalPlayer
+from hand import PlayerHand
 from constants import GameActions
-from utilities import PlayerHand
 
 
 class RandomPlayer(OptimalPlayer):

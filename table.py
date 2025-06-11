@@ -3,19 +3,15 @@ import random
 from card import Card
 from constants import PACK_OF_CARDS, BLACKJACK
 from player import Player
-from utilities import Hand
+from hand import Hand
 
 
 class Table:
     def __init__(self):
         self.players: list[Player] = []
-        self.cards: list[Card] = list(PACK_OF_CARDS)
+        self.cards: list[Card] = list(PACK_OF_CARDS) * 4
 
         self.dealer_hand = Hand()
-
-        self.wins = 0  # TODO DELETE
-        self.draws = 0
-        self.loses = 0
 
     @property
     def active_players(self):
@@ -41,6 +37,7 @@ class Table:
     def reset_table(self):
         self.dealer_hand.clear()
         self.players = [player for player in self.players if player.active]
+        random.shuffle(self.cards)
 
         for player in self.players:
             player.reset()
@@ -55,4 +52,3 @@ class Table:
             amount = player.start_bet_amount
             player.subtract_money(amount)
             player.start_hand.set_amount(amount)
-            # print(player.start_hand.win_amount)

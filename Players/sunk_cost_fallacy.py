@@ -14,7 +14,7 @@ class SunkCostFallacyPlayer(OptimalPlayer):
 
     @staticmethod
     def get_sunk_cost_coefficient(lost_money_pct):
-        return 1 + (math.cos(2 * lost_money_pct) *
+        return 1 + (math.cos(1.5 * lost_money_pct) *
                     (0.99 - math.cos(PI * (lost_money_pct + 0.2) ** 2)))
 
     @property
