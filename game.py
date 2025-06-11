@@ -1,13 +1,11 @@
-from Players.optimal_player import OptimalPlayer
-from constants import BLACKJACK, MINIMUM_DEALER_VALUE, Outcomes
+from utilities.constants import MINIMUM_DEALER_VALUE, Outcomes
 from table import Table
 
 
 class Game:
-    def __init__(self, table: Table, print_process=False):
+    def __init__(self, table: Table):
         self.table = table
         self.number_of_rounds = None
-        self.print_process = print_process
 
     def set_number_of_rounds(self, number_of_rounds: int):
         self.number_of_rounds = number_of_rounds
@@ -26,18 +24,17 @@ class Game:
         while self.active:
             self.play_one_round()
             self.table.reset_table()
-            
             self.update_number_of_rounds()
 
     def play_one_round(self):
         self.table.set_bets()
-        self.table.generate_start_cards()
 
+        self.table.generate_start_cards()
         self.table.generate_dealer_cards()
 
         self.players_make_move()
-
         self.dealer_make_move()
+
         self.evaluate_players()
 
     def players_make_move(self):
@@ -51,9 +48,6 @@ class Game:
             self.table.dealer_hand.add_card(next_card)
 
     def evaluate_players(self):
-        self.process_players()
-
-    def process_players(self):
         dealer_value = self.table.dealer_hand.optimal_value
 
         for player in self.table.players:
@@ -66,4 +60,3 @@ class Game:
                     player.process_round(hand, Outcomes.draw)
                 else:
                     player.process_round(hand, Outcomes.loss)
-                    
